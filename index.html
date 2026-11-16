@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Yash Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#f6f7f9; --card:#ffffff; --text:#14171c; --muted:#68707d; --line:#e4e7ec;
+  --accent:#2563eb; --accent-soft:#e8efff; --ok:#16a34a; --ok-soft:#e7f6ec;
+  --warn:#b45309; --warn-soft:#fdf2e3; --danger:#dc2626; --danger-soft:#fde8e8;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116; --card:#161a21; --text:#e8eaee; --muted:#9aa3b2; --line:#262c36;
+    --accent:#5b8cff; --accent-soft:#1b2540; --ok:#3ccf74; --ok-soft:#14261b;
+    --warn:#f0a44b; --warn-soft:#2a1f12; --danger:#f26b6b; --danger-soft:#2c1616;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116; --card:#161a21; --text:#e8eaee; --muted:#9aa3b2; --line:#262c36;
+  --accent:#5b8cff; --accent-soft:#1b2540; --ok:#3ccf74; --ok-soft:#14261b;
+  --warn:#f0a44b; --warn-soft:#2a1f12; --danger:#f26b6b; --danger-soft:#2c1616;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.55 "IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-inline-end:6px;vertical-align:middle}
+.dot.on{background:var(--ok)}
+.dot.off{background:var(--danger)}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+button:hover,.btn:hover{border-color:var(--muted)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--danger)}
+button.small{padding:5px 10px;font-size:13px;border-radius:8px}
+button:disabled{opacity:.5;cursor:default}
+input{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+input:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{padding:14px 16px}
+.stat .k{color:var(--muted);font-size:12.5px}
+.stat .v{font-size:22px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+.toolbar{display:flex;gap:10px;margin-bottom:12px}
+.toolbar input{flex:1}
+.users{display:flex;flex-direction:column;gap:10px}
+.user{padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center}
+.user.disabled{opacity:.6}
+.uname{font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:11.5px;padding:2px 8px;border-radius:999px;font-weight:500}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.idle{background:var(--accent-soft);color:var(--accent)}
+.badge.off{background:var(--danger-soft);color:var(--danger)}
+.meta{color:var(--muted);font-size:13px;display:flex;gap:14px;flex-wrap:wrap;margin-top:2px;font-variant-numeric:tabular-nums}
+.meta b{color:var(--text);font-weight:600}
+.spark{display:flex;align-items:flex-end;gap:3px;height:34px}
+.spark i{display:block;width:9px;background:var(--accent);border-radius:2px 2px 0 0;min-height:2px;opacity:.85}
+.actions{grid-column:1 / -1;display:flex;gap:6px;flex-wrap:wrap}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.login{max-width:380px;margin:12vh auto 0;padding:26px}
+.login h1{margin-bottom:6px}
+.login p{color:var(--muted);margin:0 0 16px;font-size:14px}
+.login label{font-size:13px;color:var(--muted);display:block;margin:12px 0 6px}
+.err{color:var(--danger);font-size:13px;min-height:20px;margin-top:8px}
+dialog{border:none;border-radius:16px;padding:0;background:var(--card);color:var(--text);max-width:min(420px,calc(100vw - 32px));width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:20px}
+.dlg h2{margin:0 0 4px;font-size:18px}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tabs button{flex:1}
+.tabs button.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.qr{background:#fff;border-radius:12px;padding:12px;display:flex;justify-content:center}
+.qr img{width:100%;max-width:300px;height:auto;image-rendering:pixelated}
+.hint{font-size:12.5px;color:var(--muted);margin:10px 0}
+.linkbox{font:12px/1.4 ui-monospace,Menlo,monospace;direction:ltr;text-align:left;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;max-height:72px;overflow:auto}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.toast.show{opacity:1}
+.hidden{display:none!important}
+@media (max-width:680px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .user{grid-template-columns:1fr}
+  .spark{justify-content:flex-start}
+  .stat .v{font-size:19px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Login -->
+  <div id="loginView" class="card login hidden">
+    <h1>Yash Panel</h1>
+    <p>أدخل كلمة المرور للمتابعة</p>
+    <label for="tokenInput">كلمة المرور (Admin token)</label>
+    <input id="tokenInput" type="password" autocomplete="current-password" dir="ltr">
+    <div class="err" id="loginErr"></div>
+    <button class="primary" id="loginBtn" style="width:100%;justify-content:center;margin-top:6px">دخول</button>
+  </div>
+
+  <!-- Main -->
+  <div id="mainView" class="hidden">
+    <header>
+      <div>
+        <h1>Yash Panel</h1>
+        <div class="sub" id="serverLine"><span class="dot"></span>…</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a class="btn hidden" id="apkBtn" target="_blank" rel="noopener">⬇︎ التطبيق</a>
+        <button id="logoutBtn" title="خروج">خروج</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="card stat"><div class="k">متصلون الآن</div><div class="v" id="sActive">–</div></div>
+      <div class="card stat"><div class="k">استهلاك اليوم</div><div class="v" id="sToday">–</div></div>
+      <div class="card stat"><div class="k">هذا الشهر</div><div class="v" id="sMonth">–</div></div>
+      <div class="card stat"><div class="k">المجموع الكلي</div><div class="v" id="sTotal">–</div></div>
+    </section>
+
+    <form class="toolbar" id="addForm">
+      <input id="newName" placeholder="اسم مستخدم جديد…" maxlength="40" autocomplete="off">
+      <button class="primary" type="submit">＋ إضافة</button>
+    </form>
+
+    <div class="users" id="users"></div>
+  </div>
+</div>
+
+<!-- QR dialog -->
+<dialog id="qrDlg">
+  <div class="dlg">
+    <h2 id="qrTitle"></h2>
+    <div class="tabs">
+      <button id="tabDirect" class="active" type="button">رابط مباشر</button>
+      <button id="tabSub" type="button">اشتراك (تحديث تلقائي)</button>
+    </div>
+    <div class="qr" id="qrBox"></div>
+    <div class="hint" id="qrHint"></div>
+    <div class="linkbox" id="qrLink"></div>
+    <div class="row">
+      <button type="button" id="qrCopy">نسخ الرابط</button>
+      <button type="button" class="primary" id="qrClose">إغلاق</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = "https://91-98-86-183.sslip.io";
+const LS_KEY = "yashPanelToken";
+const $ = (id) => document.getElementById(id);
+
+const store = {
+  get(){ try { return localStorage.getItem(LS_KEY) || ""; } catch { return ""; } },
+  set(v){ try { localStorage.setItem(LS_KEY, v); } catch {} },
+  clear(){ try { localStorage.removeItem(LS_KEY); } catch {} },
+};
+let token = store.get();
+let users = [];
+let timer = null;
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function fmtBytes(n){
+  if (!n) return "0";
+  const u = ["B","KB","MB","GB","TB"]; let i = 0;
+  while (n >= 1024 && i < u.length - 1){ n /= 1024; i++; }
+  return (n >= 100 || i === 0 ? n.toFixed(0) : n.toFixed(1)) + " " + u[i];
+}
+function ago(iso){
+  if (!iso) return "لم يتصل بعد";
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 120) return "الآن";
+  if (s < 3600) return `قبل ${Math.round(s/60)} دقيقة`;
+  if (s < 86400) return `قبل ${Math.round(s/3600)} ساعة`;
+  return `قبل ${Math.round(s/86400)} يوم`;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+async function api(path, opts = {}){
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json", ...(opts.headers || {}) },
+  });
+  if (res.status === 401){ logout("كلمة المرور غير صحيحة"); throw new Error("unauthorized"); }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || ("HTTP " + res.status));
+  return body;
+}
+
+function showLogin(err = ""){
+  clearInterval(timer);
+  $("mainView").classList.add("hidden");
+  $("loginView").classList.remove("hidden");
+  $("loginErr").textContent = err;
+  $("tokenInput").focus();
+}
+function logout(err){ token = ""; store.clear(); showLogin(err || ""); }
+
+async function login(){
+  const v = $("tokenInput").value.trim();
+  if (!v) return;
+  token = v;
+  $("loginBtn").disabled = true; $("loginErr").textContent = "";
+  try {
+    await api("/api/server");
+    store.set(token);
+    $("tokenInput").value = "";
+    start();
+  } catch (e) {
+    if (e.message !== "unauthorized") $("loginErr").textContent = "تعذّر الاتصال بالسيرفر: " + e.message;
+  } finally { $("loginBtn").disabled = false; }
+}
+
+async function refresh(){
+  try {
+    const [srv, list] = await Promise.all([api("/api/server"), api("/api/users")]);
+    users = list;
+    renderServer(srv);
+    renderUsers();
+  } catch (e) {
+    if (e.message !== "unauthorized"){
+      $("serverLine").innerHTML = `<span class="dot off"></span>تعذّر الاتصال: ${esc(e.message)}`;
+    }
+  }
+}
+
+function renderServer(s){
+  const up = s.xrayUptimeSec ? Math.floor(s.xrayUptimeSec / 3600) : 0;
+  $("serverLine").innerHTML = s.xrayOnline
+    ? `<span class="dot on"></span>يعمل · ${s.users} مستخدمين · ذاكرة ${fmtBytes(s.xrayMemBytes)} · منذ ${up} ساعة`
+    : `<span class="dot off"></span>الخدمة متوقفة`;
+  $("sActive").textContent = s.activeNow;
+  $("sToday").textContent = fmtBytes(s.todayBytes);
+  $("sMonth").textContent = fmtBytes(s.monthBytes);
+  $("sTotal").textContent = fmtBytes(s.totalBytes);
+  const a = $("apkBtn");
+  if (s.apkAvailable){ a.href = s.apkUrl; a.classList.remove("hidden"); } else a.classList.add("hidden");
+}
+
+function renderUsers(){
+  const box = $("users");
+  if (!users.length){ box.innerHTML = `<div class="card empty">لا يوجد مستخدمون بعد</div>`; return; }
+  box.innerHTML = users.map(u => {
+    const active = u.lastActive && (Date.now() - new Date(u.lastActive)) < 120000;
+    const badge = !u.enabled ? `<span class="badge off">موقوف</span>`
+      : active ? `<span class="badge ok">متصل</span>` : `<span class="badge idle">${esc(ago(u.lastActive))}</span>`;
+    const max = Math.max(1, ...u.last7);
+    const bars = u.last7.map((b, i) => `<i style="height:${Math.max(6, b / max * 100)}%" title="${fmtBytes(b)}"></i>`).join("");
+    return `<div class="card user ${u.enabled ? "" : "disabled"}" data-id="${esc(u.id)}">
+      <div>
+        <div class="uname">${esc(u.name)} ${badge}</div>
+        <div class="meta">
+          <span>اليوم <b>${fmtBytes(u.todayBytes)}</b></span>
+          <span>الشهر <b>${fmtBytes(u.monthBytes)}</b></span>
+          <span>الكل <b>${fmtBytes(u.totalUp + u.totalDown)}</b></span>
+        </div>
+      </div>
+      <div class="spark" title="آخر 7 أيام" dir="ltr">${bars}</div>
+      <div class="actions">
+        <button class="small" data-act="qr">رمز QR</button>
+        <button class="small" data-act="rename">إعادة تسمية</button>
+        <button class="small" data-act="toggle">${u.enabled ? "إيقاف" : "تفعيل"}</button>
+        <button class="small" data-act="reset">تصفير الاستهلاك</button>
+        <button class="small" data-act="newlink">رابط جديد</button>
+        <button class="small danger" data-act="delete">حذف</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function act(id, action){
+  const u = users.find(x => x.id === id); if (!u) return;
+  try {
+    if (action === "qr") return openQR(u);
+    if (action === "rename"){
+      const n = prompt("الاسم الجديد:", u.name); if (!n || n.trim() === u.name) return;
+      await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ name: n.trim() }) });
+      toast("تمت إعادة التسمية");
+    }
+    if (action === "toggle"){
+      await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ enabled: !u.enabled }) });
+      toast(u.enabled ? "تم الإيقاف" : "تم التفعيل");
+    }
+    if (action === "reset"){
+      if (!confirm(`تصفير استهلاك ${u.name}؟`)) return;
+      await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ resetUsage: true }) });
+      toast("تم التصفير");
+    }
+    if (action === "newlink"){
+      if (!confirm(`إنشاء رابط جديد لـ ${u.name}؟\nالرابط القديم سيتوقف عن العمل فوراً.`)) return;
+      const nu = await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ newLink: true }) });
+      toast("تم إنشاء رابط جديد"); await refresh(); return openQR(nu);
+    }
+    if (action === "delete"){
+      if (!confirm(`حذف ${u.name} نهائياً؟`)) return;
+      await api(`/api/users/${id}`, { method: "DELETE" });
+      toast("تم الحذف");
+    }
+    await refresh();
+  } catch (e) { if (e.message !== "unauthorized") toast("خطأ: " + e.message); }
+}
+
+// ----- QR -----
+let qrUser = null, qrMode = "direct";
+function drawQR(){
+  const text = qrMode === "direct" ? qrUser.link : qrUser.subUrl;
+  const q = qrcode(0, "M"); q.addData(text); q.make();
+  $("qrBox").innerHTML = q.createImgTag(8, 8);
+  $("qrLink").textContent = text;
+  $("qrHint").textContent = qrMode === "direct"
+    ? "يعمل في تطبيق Yash Sync وفي NekoBox وv2rayNG والآيفون (Shadowrocket / Streisand)."
+    : "للتطبيقات التي تدعم الاشتراك: تتحدّث الإعدادات تلقائياً إذا غيّرنا شيئاً في السيرفر.";
+  $("tabDirect").classList.toggle("active", qrMode === "direct");
+  $("tabSub").classList.toggle("active", qrMode === "sub");
+}
+function openQR(u){ qrUser = u; qrMode = "direct"; $("qrTitle").textContent = u.name; drawQR(); $("qrDlg").showModal(); }
+
+// ----- events -----
+$("loginBtn").onclick = login;
+$("tokenInput").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+$("logoutBtn").onclick = () => logout();
+$("addForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $("newName").value.trim(); if (!name) return;
+  try {
+    const u = await api("/api/users", { method: "POST", body: JSON.stringify({ name }) });
+    $("newName").value = ""; toast("تمت الإضافة"); await refresh(); openQR(u);
+  } catch (err) { if (err.message !== "unauthorized") toast("خطأ: " + err.message); }
+};
+$("users").addEventListener("click", e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  act(b.closest(".user").dataset.id, b.dataset.act);
+});
+$("tabDirect").onclick = () => { qrMode = "direct"; drawQR(); };
+$("tabSub").onclick = () => { qrMode = "sub"; drawQR(); };
+$("qrClose").onclick = () => $("qrDlg").close();
+$("qrCopy").onclick = async () => {
+  try { await navigator.clipboard.writeText($("qrLink").textContent); toast("تم النسخ"); }
+  catch { toast("انسخ الرابط يدوياً"); }
+};
+
+function start(){
+  $("loginView").classList.add("hidden");
+  $("mainView").classList.remove("hidden");
+  refresh();
+  clearInterval(timer);
+  timer = setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && token) refresh(); });
+
+token ? start() : showLogin();
+</script>
+</body>
+</html>
