@@ -325,7 +325,7 @@ function drawQR(){
   $("qrBox").innerHTML = q.createImgTag(8, 8);
   $("qrLink").textContent = text;
   $("qrHint").textContent = qrMode === "direct"
-    ? "يعمل في تطبيق Yash Sync وفي NekoBox وv2rayNG والآيفون (Shadowrocket / Streisand)."
+    ? "يعمل في تطبيق EasyGo وفي NekoBox وv2rayNG والآيفون (Shadowrocket / Streisand)."
     : "للتطبيقات التي تدعم الاشتراك: تتحدّث الإعدادات تلقائياً إذا غيّرنا شيئاً في السيرفر.";
   $("tabDirect").classList.toggle("active", qrMode === "direct");
   $("tabSub").classList.toggle("active", qrMode === "sub");
