@@ -143,14 +143,15 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
   <div class="dlg">
     <h2 id="qrTitle"></h2>
     <div class="tabs">
-      <button id="tabDirect" class="active" type="button">رابط مباشر</button>
-      <button id="tabSub" type="button">اشتراك (تحديث تلقائي)</button>
+      <button id="tabCode" class="active" type="button">رمز EasyGo</button>
+      <button id="tabDirect" type="button">رابط مباشر</button>
+      <button id="tabSub" type="button">اشتراك</button>
     </div>
     <div class="qr" id="qrBox"></div>
     <div class="hint" id="qrHint"></div>
     <div class="linkbox" id="qrLink"></div>
     <div class="row">
-      <button type="button" id="qrCopy">نسخ الرابط</button>
+      <button type="button" id="qrCopy">نسخ</button>
       <button type="button" class="primary" id="qrClose">إغلاق</button>
     </div>
   </div>
@@ -190,6 +191,13 @@ function ago(iso){
   if (s < 3600) return `قبل ${Math.round(s/60)} دقيقة`;
   if (s < 86400) return `قبل ${Math.round(s/3600)} ساعة`;
   return `قبل ${Math.round(s/86400)} يوم`;
+}
+// EasyGo code = "EG-" + the subscription token (last path part of subUrl). The app turns it
+// back into the subscription URL itself, so customers never see a hostname.
+function codeOf(u){ const m = /\/s\/([0-9a-f]{32})\/?$/i.exec(u.subUrl || ""); return m ? "EG-" + m[1].toLowerCase() : ""; }
+async function copyText(text, okMsg){
+  try { await navigator.clipboard.writeText(text); toast(okMsg || "تم النسخ"); }
+  catch { toast("انسخ يدوياً"); }
 }
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
@@ -266,6 +274,7 @@ function renderUsers(){
     return `<div class="card user ${u.enabled ? "" : "disabled"}" data-id="${esc(u.id)}">
       <div>
         <div class="uname">${esc(u.name)} ${badge}</div>
+        <div class="meta" dir="ltr" style="justify-content:flex-end"><code>${esc(codeOf(u))}</code></div>
         <div class="meta">
           <span>اليوم <b>${fmtBytes(u.todayBytes)}</b></span>
           <span>الشهر <b>${fmtBytes(u.monthBytes)}</b></span>
@@ -274,11 +283,12 @@ function renderUsers(){
       </div>
       <div class="spark" title="آخر 7 أيام" dir="ltr">${bars}</div>
       <div class="actions">
-        <button class="small" data-act="qr">رمز QR</button>
+        <button class="small" data-act="copycode">نسخ الرمز</button>
+        <button class="small" data-act="qr">QR</button>
         <button class="small" data-act="rename">إعادة تسمية</button>
         <button class="small" data-act="toggle">${u.enabled ? "إيقاف" : "تفعيل"}</button>
         <button class="small" data-act="reset">تصفير الاستهلاك</button>
-        <button class="small" data-act="newlink">رابط جديد</button>
+        <button class="small" data-act="newlink">رمز جديد</button>
         <button class="small danger" data-act="delete">حذف</button>
       </div>
     </div>`;
@@ -289,6 +299,7 @@ async function act(id, action){
   const u = users.find(x => x.id === id); if (!u) return;
   try {
     if (action === "qr") return openQR(u);
+    if (action === "copycode") return copyText(`رمز EasyGo الخاص بك: ${codeOf(u)}`, "تم نسخ الرمز");
     if (action === "rename"){
       const n = prompt("الاسم الجديد:", u.name); if (!n || n.trim() === u.name) return;
       await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ name: n.trim() }) });
@@ -304,9 +315,9 @@ async function act(id, action){
       toast("تم التصفير");
     }
     if (action === "newlink"){
-      if (!confirm(`إنشاء رابط جديد لـ ${u.name}؟\nالرابط القديم سيتوقف عن العمل فوراً.`)) return;
+      if (!confirm(`إنشاء رمز جديد لـ ${u.name}؟\nالرمز والروابط القديمة ستتوقف عن العمل فوراً.`)) return;
       const nu = await api(`/api/users/${id}`, { method: "PATCH", body: JSON.stringify({ newLink: true }) });
-      toast("تم إنشاء رابط جديد"); await refresh(); return openQR(nu);
+      toast("تم إنشاء رمز جديد"); await refresh(); return openQR(nu);
     }
     if (action === "delete"){
       if (!confirm(`حذف ${u.name} نهائياً؟`)) return;
@@ -318,19 +329,22 @@ async function act(id, action){
 }
 
 // ----- QR -----
-let qrUser = null, qrMode = "direct";
+let qrUser = null, qrMode = "code";
 function drawQR(){
-  const text = qrMode === "direct" ? qrUser.link : qrUser.subUrl;
+  const text = qrMode === "code" ? codeOf(qrUser) : qrMode === "direct" ? qrUser.link : qrUser.subUrl;
   const q = qrcode(0, "M"); q.addData(text); q.make();
   $("qrBox").innerHTML = q.createImgTag(8, 8);
   $("qrLink").textContent = text;
-  $("qrHint").textContent = qrMode === "direct"
-    ? "يعمل في تطبيق EasyGo وفي NekoBox وv2rayNG والآيفون (Shadowrocket / Streisand)."
-    : "للتطبيقات التي تدعم الاشتراك: تتحدّث الإعدادات تلقائياً إذا غيّرنا شيئاً في السيرفر.";
+  $("qrHint").textContent = qrMode === "code"
+    ? "للزبائن: في تطبيق EasyGo اضغط ＋ ثم امسح هذا الرمز أو الصقه. لا يظهر فيه أي عنوان للسيرفر."
+    : qrMode === "direct"
+    ? "للاستعمال الشخصي فقط (فيه عنوان السيرفر): NekoBox وv2rayNG والآيفون (Shadowrocket / Streisand)."
+    : "للاستعمال الشخصي فقط (فيه عنوان السيرفر): للتطبيقات الأخرى التي تدعم الاشتراك.";
+  $("tabCode").classList.toggle("active", qrMode === "code");
   $("tabDirect").classList.toggle("active", qrMode === "direct");
   $("tabSub").classList.toggle("active", qrMode === "sub");
 }
-function openQR(u){ qrUser = u; qrMode = "direct"; $("qrTitle").textContent = u.name; drawQR(); $("qrDlg").showModal(); }
+function openQR(u){ qrUser = u; qrMode = "code"; $("qrTitle").textContent = u.name; drawQR(); $("qrDlg").showModal(); }
 
 // ----- events -----
 $("loginBtn").onclick = login;
@@ -348,13 +362,12 @@ $("users").addEventListener("click", e => {
   const b = e.target.closest("button[data-act]"); if (!b) return;
   act(b.closest(".user").dataset.id, b.dataset.act);
 });
+$("tabCode").onclick = () => { qrMode = "code"; drawQR(); };
 $("tabDirect").onclick = () => { qrMode = "direct"; drawQR(); };
 $("tabSub").onclick = () => { qrMode = "sub"; drawQR(); };
 $("qrClose").onclick = () => $("qrDlg").close();
-$("qrCopy").onclick = async () => {
-  try { await navigator.clipboard.writeText($("qrLink").textContent); toast("تم النسخ"); }
-  catch { toast("انسخ الرابط يدوياً"); }
-};
+$("qrCopy").onclick = () => copyText(qrMode === "code"
+  ? `رمز EasyGo الخاص بك: ${codeOf(qrUser)}` : $("qrLink").textContent);
 
 function start(){
   $("loginView").classList.add("hidden");
